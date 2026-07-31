@@ -78,9 +78,26 @@ st.markdown("---")
 col_kiri, col_kanan = st.columns(2)
 
 with col_kiri:
-    st.subheader("Tren Volume Pinjaman vs. Tingkat Gagal Bayar")
-    st.info("Area ini sudah siap untuk dimasukkan kode grafik garis (Line Chart) Plotly dari file Excel kamu.")
-    
+    st.subheader("Distribusi Risiko Usaha")
+    if not df.empty:
+        try:
+            # GANTI 'resiko_usaha' DENGAN NAMA KOLOM ASLI DI EXCELMU
+            fig_pie = px.pie(df, names='resiko_usaha', hole=0.4, 
+                             color_discrete_sequence=px.colors.qualitative.Pastel)
+            st.plotly_chart(fig_pie, use_container_width=True)
+        except Exception as e:
+            st.warning("⚠️ Grafik belum muncul karena nama kolom 'resiko_usaha' di kode tidak sama dengan yang ada di Excel.")
+
 with col_kanan:
     st.subheader("Distribusi Keputusan Berdasarkan Profil Risiko")
-    st.info("Area ini sudah siap untuk dimasukkan kode grafik batang (Bar Chart) Plotly dari file Excel kamu.")
+    if not df.empty:
+        try:
+            # GANTI 'resiko_usaha' DAN 'status_kredit' DENGAN NAMA KOLOM ASLI DI EXCELMU
+            df_bar = df.groupby(['resiko_usaha', 'status_kredit']).size().reset_index(name='Jumlah')
+            
+            fig_bar = px.bar(df_bar, y='resiko_usaha', x='Jumlah', color='status_kredit', 
+                             orientation='h', barmode='group',
+                             color_discrete_map={'ACC': '#28a745', 'TOLAK': '#dc3545'}) # Warna Hijau & Merah
+            st.plotly_chart(fig_bar, use_container_width=True)
+        except Exception as e:
+            st.warning("⚠️ Grafik belum muncul karena nama kolom 'resiko_usaha' atau 'status_kredit' belum sesuai dengan file Excel.")
