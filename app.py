@@ -63,14 +63,4 @@ if st.button("Analisis Kelayakan"):
     else:
         st.error("🔴 HASIL: Calon Debitur Berisiko Tinggi (Zona Merah / TOLAK)")
     
-    # 5. PENTING: Lakukan standarisasi/scaling sebelum diprediksi!
-    data_scaled = scaler.transform(data_baru)
-    
-    # 6. Lakukan prediksi menggunakan model CART
-    prediksi = model.predict(data_scaled)
-    
-    # Tampilkan Hasil
-    if prediksi[0] == 'ACC' or prediksi[0] == 1:
-        st.success("🟢 HASIL: Calon Debitur Layak (Zona Hijau / ACC)")
-    else:
-        st.error("🔴 HASIL: Calon Debitur Berisiko Tinggi (Zona Merah / TOLAK)")
+ 
