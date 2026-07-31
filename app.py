@@ -12,13 +12,13 @@ model = paket_otak['model']
 scaler = paket_otak['scaler']
 list_fitur = paket_otak['list_fitur']
 
-# --- 3. LOAD DATASET HISTORIS (.XLS) ---
-# Nama file sudah disesuaikan menjadi CreditRisk.xls
+# --- 3. LOAD DATASET HISTORIS ---
 try:
-    df = pd.read_excel('CreditRisk.xls')
+    # Menggunakan file final yang sudah digabung
+    df = pd.read_excel('Laporan_Final_CreditRisk (5).xlsx')
 except FileNotFoundError:
-    st.error("File CreditRisk.xls belum terdeteksi. Pastikan file sudah ter-upload di GitHub dan huruf besar/kecilnya sama persis!")
-    df = pd.DataFrame() 
+    st.error("File Laporan_Final_CreditRisk (5) belum terdeteksi di GitHub. Pastikan nama dan ekstensinya pas!")
+    df = pd.DataFrame()
 
 # ==========================================
 # SIDEBAR (PANEL KIRI UNTUK INPUT PREDIKSI)
