@@ -129,12 +129,24 @@ with col_kanan:
     st.subheader("Distribusi Keputusan Berdasarkan Profil Risiko")
     if not df.empty:
         try:
-            # SUDAH DIREVISI: Menggunakan 'status' sesuai gambar Excel kamu
-            df_bar = df.groupby(['resiko_usaha', 'status']).size().reset_index(name='Jumlah')
+            # PERBAIKAN: Menggunakan 'KEPUTUSAN_SYSTEM' agar outputnya ACC/TOLAK sesuai model CART
+            df_bar = df.groupby(['resiko_usaha', 'KEPUTUSAN_SYSTEM']).size().reset_index(name='Jumlah')
             
-            fig_bar = px.bar(df_bar, y='resiko_usaha', x='Jumlah', color='status', 
-                             orientation='h', barmode='group',
-                             color_discrete_map={'ACC': '#28a745', 'TOLAK': '#dc3545'}) 
+            fig_bar = px.bar(
+                df_bar, 
+                y='resiko_usaha', 
+                x='Jumlah', 
+                color='KEPUTUSAN_SYSTEM', 
+                orientation='h', 
+                barmode='group',
+                color_discrete_map={'ACC': '#28a745', 'TOLAK': '#dc3545'},
+                labels={
+                    'resiko_usaha': 'Risiko Usaha', 
+                    'Jumlah': 'Jumlah Nasabah', 
+                    'KEPUTUSAN_SYSTEM': 'Keputusan CART'
+                }
+            ) 
             st.plotly_chart(fig_bar, use_container_width=True)
         except Exception as e:
             st.warning(f"⚠️ Error Grafik Kanan: {e}")
+            st.info("Pastikan di dalam file 'Laporan_Final_CreditRisk (5).xlsx' terdapat kolom bernama 'KEPUTUSAN_SYSTEM'")
