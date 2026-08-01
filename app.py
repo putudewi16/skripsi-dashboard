@@ -23,23 +23,23 @@ except FileNotFoundError:
 # ==========================================
 # SIDEBAR (PANEL KIRI UNTUK INPUT PREDIKSI)
 # ==========================================
-st.sidebar.header("Form Prediksi CART")
+st.sidebar.header("Form Prediksi CART (Full Faktor)")
 
+# --- 1. INPUT NUMERIK ---
 plafond_fix = st.sidebar.number_input("Input plafond_fix", value=2000000.0)
 tenor_fix = st.sidebar.number_input("Input tenor_fix", value=2.0)
 margin_fix = st.sidebar.number_input("Input margin_fix (Rate/Desimal)", value=0.0200, format="%.4f", step=0.001)
 
-# Tambahan Faktor Kunci agar Model Tidak Buta
-usia = st.sidebar.number_input("Input Usia", value=30)
-profile_resiko = st.sidebar.selectbox("Profile Risiko Nasabah", ["Low", "Medium", "High"])
+# --- 2. INPUT KATEGORIKAL ---
+jk = st.sidebar.selectbox("Jenis Kelamin", ["Pria", "Wanita"]) 
+usia = st.sidebar.selectbox("Input Usia", ["Muda", "Dewasa", "Tua"])
+pendidikan = st.sidebar.selectbox("Pendidikan", ["SD/Sederajat", "SLTP/Sederajat", "SLTA/Sederajat", "Akademi", "D1", "D2", "D3","D4", "S1", "S2", "Tidak Diketahui"]) # Sesuaikan opsi Excel
+pekerjaan = st.sidebar.selectbox("Pekerjaan", ["Anggota TNI/Polri", "Pegawai Swasta", "Wiraswasta", "Karyawan BUMN", "Mengurus Rumah Tangga", "Pegawai Negeri Sipil", "Pelajar/Mahasiswa", "Tidak Bekerja/Bukan Pelajar", "Wiraswasta", "Lainnya" ]) 
+bidang_usaha = st.sidebar.selectbox("Bidang Usaha", ["UMKM", "Pertanian"]) 
 resiko_usaha = st.sidebar.selectbox("Risiko Usaha", ["SANGAT RENDAH", "RENDAH", "SEDANG", "TINGGI", "SANGAT TINGGI"])
+profile_resiko = st.sidebar.selectbox("Profile Risiko Nasabah", ["A1", "A2", "A3", "B1", "B2", "B3", "C1", "C2", "C3", "D1", "D2", "D3", "E1", "E2", "E3"])
+jenis_relasi = st.sidebar.selectbox("Jenis Relasi", ["perorangan", "badan_hukum"]) 
 
-# Konversi Kategori ke Format Encoding (Pastikan penamaan fiturnya sama persis dengan list_fitur model kamu)
-resiko_usaha_TINGGI = 1 if resiko_usaha in ["TINGGI", "SANGAT TINGGI"] else 0
-resiko_usaha_SEDANG = 1 if resiko_usaha == "SEDANG" else 0
-
-profile_resiko_High = 1 if profile_resiko == "High" else 0
-profile_resiko_Medium = 1 if profile_resiko == "Medium" else 0
 
 hasil_tebakan = "-"
 warna_tebakan = "black"
@@ -48,19 +48,12 @@ if st.sidebar.button("Analisis Kelayakan"):
     # Siapkan semua fitur dengan nilai 0 terlebih dahulu
     data_input = {fitur: 0 for fitur in list_fitur}
     
-    # 1. Masukkan nilai langsung dari form
-    if 'Usia' in list_fitur: data_input['Usia'] = usia
+    # --- A. MASUKKAN INPUT NUMERIK ---
     if 'plafond_fix' in list_fitur: data_input['plafond_fix'] = plafond_fix
     if 'tenor_fix' in list_fitur: data_input['tenor_fix'] = tenor_fix
     if 'margin_fix' in list_fitur: data_input['margin_fix'] = margin_fix
     
-    # 2. Masukkan nilai encoding kategorikal
-    if 'resiko_usaha_TINGGI' in list_fitur: data_input['resiko_usaha_TINGGI'] = resiko_usaha_TINGGI
-    if 'resiko_usaha_SEDANG' in list_fitur: data_input['resiko_usaha_SEDANG'] = resiko_usaha_SEDANG
-    if 'profile_resiko_High' in list_fitur: data_input['profile_resiko_High'] = profile_resiko_High
-    if 'profile_resiko_Medium' in list_fitur: data_input['profile_resiko_Medium'] = profile_resiko_Medium
-    
-    # 3. Kalkulasi fitur turunan persis seperti di Colab
+    # --- B. KALKULASI 2 FAKTOR MATEMATIS (Sama persis dengan Colab) ---
     if 'Cicilan_Per_Bulan' in list_fitur:
         tenor_pembagi = tenor_fix if tenor_fix != 0 else 1
         data_input['Cicilan_Per_Bulan'] = plafond_fix / tenor_pembagi
@@ -68,8 +61,26 @@ if st.sidebar.button("Analisis Kelayakan"):
     if 'Beban_Bunga' in list_fitur:
         plafond_pembagi = plafond_fix if plafond_fix != 0 else 1
         data_input['Beban_Bunga'] = margin_fix / plafond_pembagi
+
+    # --- C. OTOMATISASI MAPPING KATEGORIKAL (ONE-HOT ENCODING) ---
+    kategorikal_input = {
+        'jk': jk,
+        'Usia': usia,
+        'pendidikan_relasi': pendidikan,
+        'pekerjaan_relasi': pekerjaan,
+        'bidang_usaha': bidang_usaha,
+        'resiko_usaha': resiko_usaha,
+        'profile_resiko': profile_resiko,
+        'jenis_relasi': jenis_relasi
+    }
     
-    # Eksekusi Prediksi
+    for nama_kolom_asli, nilai_pilihan in kategorikal_input.items():
+        # Model scikit-learn get_dummies biasanya bikin nama kolom jadi "NamaKolom_Nilainya"
+        nama_dummy = f"{nama_kolom_asli}_{nilai_pilihan}"
+        if nama_dummy in list_fitur:
+            data_input[nama_dummy] = 1
+
+    # --- D. EKSEKUSI PREDIKSI ---
     data_baru = pd.DataFrame([data_input])[list_fitur]
     data_scaled = scaler.transform(data_baru)
     prediksi = model.predict(data_scaled)
