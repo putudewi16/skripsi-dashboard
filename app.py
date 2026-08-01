@@ -25,33 +25,42 @@ except FileNotFoundError:
 # ==========================================
 st.sidebar.header("Form Prediksi CART")
 
-plafond_fix = st.sidebar.number_input("Input plafond_fix", value=15000000.0)
-tenor_fix = st.sidebar.number_input("Input tenor_fix", value=3.0)
+plafond_fix = st.sidebar.number_input("Input plafond_fix", value=2000000.0)
+tenor_fix = st.sidebar.number_input("Input tenor_fix", value=2.0)
+margin_fix = st.sidebar.number_input("Input margin_fix (Rate/Desimal)", value=0.0200, format="%.4f", step=0.001)
 
-# ---> INI YANG DITAMBAH: Input margin diubah jadi desimal
-margin_fix = st.sidebar.number_input("Input margin_fix (Rate/Desimal)", value=0.015, format="%.4f", step=0.001)
+# Tambahan Faktor Kunci agar Model Tidak Buta
+usia = st.sidebar.number_input("Input Usia", value=30)
+profile_resiko = st.sidebar.selectbox("Profile Risiko Nasabah", ["Low", "Medium", "High"])
+resiko_usaha = st.sidebar.selectbox("Risiko Usaha", ["SANGAT RENDAH", "RENDAH", "SEDANG", "TINGGI", "SANGAT TINGGI"])
 
-resiko_usaha = st.sidebar.selectbox("Input Risiko Usaha", ["SANGAT RENDAH", "RENDAH", "SEDANG", "TINGGI", "SANGAT TINGGI"])
-
+# Konversi Kategori ke Format Encoding (Pastikan penamaan fiturnya sama persis dengan list_fitur model kamu)
 resiko_usaha_TINGGI = 1 if resiko_usaha in ["TINGGI", "SANGAT TINGGI"] else 0
 resiko_usaha_SEDANG = 1 if resiko_usaha == "SEDANG" else 0
+
+profile_resiko_High = 1 if profile_resiko == "High" else 0
+profile_resiko_Medium = 1 if profile_resiko == "Medium" else 0
 
 hasil_tebakan = "-"
 warna_tebakan = "black"
 
 if st.sidebar.button("Analisis Kelayakan"):
-    # ---> INI YANG DIUBAH: Tambah default value Usia biar nggak 0
+    # Siapkan semua fitur dengan nilai 0 terlebih dahulu
     data_input = {fitur: 0 for fitur in list_fitur}
-    if 'Usia' in list_fitur: data_input['Usia'] = 35 
     
-    # Memasukkan inputan form ke dalam data prediksi
+    # 1. Masukkan nilai langsung dari form
+    if 'Usia' in list_fitur: data_input['Usia'] = usia
     if 'plafond_fix' in list_fitur: data_input['plafond_fix'] = plafond_fix
     if 'tenor_fix' in list_fitur: data_input['tenor_fix'] = tenor_fix
     if 'margin_fix' in list_fitur: data_input['margin_fix'] = margin_fix
+    
+    # 2. Masukkan nilai encoding kategorikal
     if 'resiko_usaha_TINGGI' in list_fitur: data_input['resiko_usaha_TINGGI'] = resiko_usaha_TINGGI
     if 'resiko_usaha_SEDANG' in list_fitur: data_input['resiko_usaha_SEDANG'] = resiko_usaha_SEDANG
+    if 'profile_resiko_High' in list_fitur: data_input['profile_resiko_High'] = profile_resiko_High
+    if 'profile_resiko_Medium' in list_fitur: data_input['profile_resiko_Medium'] = profile_resiko_Medium
     
-    # ---> INI YANG DITAMBAH: Perhitungan otomatis biar masuk logika pohon CART
+    # 3. Kalkulasi fitur turunan persis seperti di Colab
     if 'Cicilan_Per_Bulan' in list_fitur:
         tenor_pembagi = tenor_fix if tenor_fix != 0 else 1
         data_input['Cicilan_Per_Bulan'] = plafond_fix / tenor_pembagi
@@ -60,7 +69,7 @@ if st.sidebar.button("Analisis Kelayakan"):
         plafond_pembagi = plafond_fix if plafond_fix != 0 else 1
         data_input['Beban_Bunga'] = margin_fix / plafond_pembagi
     
-    # Prediksi eksekusi
+    # Eksekusi Prediksi
     data_baru = pd.DataFrame([data_input])[list_fitur]
     data_scaled = scaler.transform(data_baru)
     prediksi = model.predict(data_scaled)
@@ -73,7 +82,6 @@ if st.sidebar.button("Analisis Kelayakan"):
         warna_tebakan = "red"
 
 st.sidebar.markdown(f"### Hasil: <span style='color:{warna_tebakan}'>{hasil_tebakan}</span>", unsafe_allow_html=True)
-
 
 # ==========================================
 # BAGIAN UTAMA (HEADER & KARTU ANGKA KPI)
