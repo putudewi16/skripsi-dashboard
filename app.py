@@ -27,6 +27,7 @@ st.sidebar.header("Form Prediksi CART")
 
 plafond_fix = st.sidebar.number_input("Input plafond_fix", value=15000000.0)
 tenor_fix = st.sidebar.number_input("Input tenor_fix", value=3.0)
+margin_fix = st.sidebar.number_input("Input margin_fix (Keuntungan)", value=1000000.0) # Tambahan baru
 resiko_usaha = st.sidebar.selectbox("Input Risiko Usaha", ["SANGAT RENDAH", "RENDAH", "SEDANG", "TINGGI", "SANGAT TINGGI"])
 
 resiko_usaha_TINGGI = 1 if resiko_usaha in ["TINGGI", "SANGAT TINGGI"] else 0
@@ -36,13 +37,28 @@ hasil_tebakan = "-"
 warna_tebakan = "black"
 
 if st.sidebar.button("Analisis Kelayakan"):
+    # 1. Jangan isi dengan 0, tapi gunakan nilai rata-rata/logis sebagai default awal
+    # Misalnya Usia default 35 tahun, bukan 0.
     data_input = {fitur: 0 for fitur in list_fitur}
+    if 'Usia' in list_fitur: data_input['Usia'] = 35 
     
+    # 2. Masukkan nilai dari form
     if 'plafond_fix' in list_fitur: data_input['plafond_fix'] = plafond_fix
     if 'tenor_fix' in list_fitur: data_input['tenor_fix'] = tenor_fix
+    if 'margin_fix' in list_fitur: data_input['margin_fix'] = margin_fix
     if 'resiko_usaha_TINGGI' in list_fitur: data_input['resiko_usaha_TINGGI'] = resiko_usaha_TINGGI
     if 'resiko_usaha_SEDANG' in list_fitur: data_input['resiko_usaha_SEDANG'] = resiko_usaha_SEDANG
     
+    # 3. Hitung rasio persis seperti di Colab
+    if 'Cicilan_Per_Bulan' in list_fitur:
+        tenor_pembagi = tenor_fix if tenor_fix != 0 else 1
+        data_input['Cicilan_Per_Bulan'] = plafond_fix / tenor_pembagi
+        
+    if 'Beban_Bunga' in list_fitur:
+        plafond_pembagi = plafond_fix if plafond_fix != 0 else 1
+        data_input['Beban_Bunga'] = margin_fix / plafond_pembagi
+    
+    # 4. Prediksi
     data_baru = pd.DataFrame([data_input])[list_fitur]
     data_scaled = scaler.transform(data_baru)
     prediksi = model.predict(data_scaled)
@@ -53,9 +69,6 @@ if st.sidebar.button("Analisis Kelayakan"):
     else:
         hasil_tebakan = "Berisiko (TOLAK)"
         warna_tebakan = "red"
-
-st.sidebar.markdown(f"### Hasil: <span style='color:{warna_tebakan}'>{hasil_tebakan}</span>", unsafe_allow_html=True)
-
 # ==========================================
 # BAGIAN UTAMA (HEADER & KARTU ANGKA KPI)
 # ==========================================
