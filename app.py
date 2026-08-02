@@ -103,9 +103,9 @@ kpi1, kpi2, kpi3, kpi4 = st.columns(4)
 
 total_project = len(df) if not df.empty else 0
 
-kpi1.metric(label="Rata Rata Pinjaman", value="Rp167M") 
+kpi1.metric(label="Rata Rata Pinjaman", value="Rp170M") 
 kpi2.metric(label="Total Project", value=f"{total_project:,.0f}")
-kpi3.metric(label="Keputusan System Kredit (ACC)", value="4,760")
+kpi3.metric(label="Keputusan System Kredit (ACC)", value="4,673")
 kpi4.metric(label="Hasil Prediksi CART (Live)", value=hasil_tebakan)
 
 st.markdown("---")
